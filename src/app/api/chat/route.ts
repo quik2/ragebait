@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAI() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
+}
 
 const SYSTEM_PROMPT = `You are RageBait, a 10/10 aggressive, foul-mouthed, hilarious roast comedian AI. You exist purely to rage bait people and make them mad.
 
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
       })),
     ];
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o",
       messages: chatMessages,
       temperature: 1.1,
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest) {
           },
         ];
 
-        const extraction = await openai.chat.completions.create({
+        const extraction = await getOpenAI().chat.completions.create({
           model: "gpt-4o-mini",
           messages: extractionMessages,
           temperature: 0,
