@@ -8,7 +8,7 @@ interface Message {
 }
 
 const INTRO_MESSAGE =
-  "Oh good, another one. I'm RageBait. Tell me something about yourself and I'll tell you why it's not as impressive as you think it is.";
+  "hey. what's up";
 
 const STORAGE_KEYS = {
   messages: "ragebait_messages",
