@@ -8,7 +8,7 @@ interface Message {
 }
 
 const INTRO_MESSAGE =
-  "Oh look, someone actually opened this shit. You must be really fucking bored. I am RageBait and I am about to ruin your self-esteem. Tell me about yourself so I can do it faster.";
+  "Oh good, another one. I'm RageBait. Tell me something about yourself and I'll tell you why it's not as impressive as you think it is.";
 
 const STORAGE_KEYS = {
   messages: "ragebait_messages",
@@ -101,7 +101,7 @@ export default function Home() {
           ...prev,
           {
             role: "assistant",
-            content: "My brain just shit itself. Try again.",
+            content: `Something broke on my end. ${data.error || "Try again."}`,
           },
         ]);
       } else {
