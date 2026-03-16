@@ -7,8 +7,7 @@ interface Message {
   content: string;
 }
 
-const INTRO_MESSAGE =
-  "hey. what's up";
+const INTRO_MESSAGE = "";
 
 const STORAGE_KEYS = {
   messages: "ragebait_messages",
@@ -45,11 +44,7 @@ export default function Home() {
     const savedFacts = loadFromStorage<string[]>(STORAGE_KEYS.facts, []);
     const visits = loadFromStorage<number>(STORAGE_KEYS.visits, 0);
 
-    if (savedMessages.length === 0) {
-      setMessages([{ role: "assistant", content: INTRO_MESSAGE }]);
-    } else {
-      setMessages(savedMessages);
-    }
+    setMessages(savedMessages);
 
     setFacts(savedFacts);
     localStorage.setItem(STORAGE_KEYS.visits, JSON.stringify(visits + 1));
@@ -142,7 +137,7 @@ export default function Home() {
   const clearChat = () => {
     localStorage.removeItem(STORAGE_KEYS.messages);
     localStorage.removeItem(STORAGE_KEYS.facts);
-    setMessages([{ role: "assistant", content: INTRO_MESSAGE }]);
+    setMessages([]);
     setFacts([]);
   };
 
