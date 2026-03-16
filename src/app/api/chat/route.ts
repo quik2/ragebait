@@ -1,8 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 
-function getOpenAI() {
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
+
+async function chatCompletion(messages: Array<{role: string; content: string}>, model: string, temperature: number, maxTokens: number) {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature,
+      max_tokens: maxTokens,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`OpenAI ${res.status}: ${err}`);
+  }
+  const data = await res.json();
+  return data.choices[0].message.content || "...";
 }
 
 const SYSTEM_PROMPT = `You are RageBait — an AI whose entire purpose is to get under people's skin in the smartest, most infuriating way possible.
@@ -48,14 +67,7 @@ export async function POST(req: NextRequest) {
       })),
     ];
 
-    const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o",
-      messages: chatMessages,
-      temperature: 1.1,
-      max_tokens: 256,
-    });
-
-    const reply = completion.choices[0].message.content || "...";
+    const reply = await chatCompletion(chatMessages, "gpt-4o", 1.1, 256);
 
     // Extract facts from the latest exchange using gpt-4o-mini
     let newFacts: string[] = [];
@@ -63,23 +75,15 @@ export async function POST(req: NextRequest) {
     if (lastUserMsg && lastUserMsg.role === "user") {
       try {
         const extractionMessages = [
-          { role: "system" as const, content: EXTRACT_PROMPT },
+          { role: "system", content: EXTRACT_PROMPT },
           {
-            role: "user" as const,
+            role: "user",
             content: `User said: "${lastUserMsg.content}"\nBot replied: "${reply}"`,
           },
         ];
 
-        const extraction = await getOpenAI().chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: extractionMessages,
-          temperature: 0,
-          max_tokens: 256,
-        });
-
-        const parsed = JSON.parse(
-          extraction.choices[0].message.content || "[]"
-        );
+        const extractionText = await chatCompletion(extractionMessages, "gpt-4o-mini", 0, 256);
+        const parsed = JSON.parse(extractionText);
         if (Array.isArray(parsed)) {
           newFacts = parsed;
         }
@@ -91,8 +95,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ reply, newFacts });
   } catch (error: unknown) {
     console.error("Chat API error:", error);
-    const message =
-      error instanceof Error ? error.message : "Something broke";
-    return NextResponse.json({ error: message }, { status: 500 });
+    if (error instanceof Error) {
+      return NextResponse.json({ error: `${error.name}: ${error.message}` }, { status: 500 });
+    }
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
